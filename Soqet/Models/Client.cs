@@ -16,7 +16,7 @@ namespace Soqet.Models
             {
                 var uuid = new byte[16];
                 RandomNumberGenerator.Fill(uuid);
-                Id = Convert.ToHexString(uuid);
+                Id = Convert.ToHexString(uuid).ToLower();
             } else
             {
                 Id = GenerateAuthID(token);
@@ -42,7 +42,7 @@ namespace Soqet.Models
                 uuid.Append(buff[0].ToString("x"));
             }
 
-            return uuid.ToString();
+            return uuid.ToString().ToLower();
         }
 
         private static byte[] Hash(string input)

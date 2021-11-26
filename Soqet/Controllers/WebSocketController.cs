@@ -4,6 +4,8 @@ using Soqet.Models;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Soqet.Controllers
 {
@@ -16,6 +18,7 @@ namespace Soqet.Controllers
         private readonly List<Client> _clients;
 
         private readonly long _messagesSize;
+        private string _motd = "Soqet v3";
 
         public WebSocketController(ILogger<WebSocketController> logger, IConfiguration configuration, List<Client> clients)
         {
@@ -24,6 +27,7 @@ namespace Soqet.Controllers
             _clients = clients;
 
             _messagesSize = _configuration.GetValue<long>("WebSocketMaxMessageSize");
+            _motd = _configuration["MOTD"];
         }
 
         [HttpGet]
@@ -37,13 +41,59 @@ namespace Soqet.Controllers
                 var client = new Client();
                 _clients.Add(client);
 
+                var motdBuffer = await Deserialize(new EventData()
+                {
+                    Event = "motd",
+                    Data = new MOTDEvent
+                    {
+                        Message = _motd,
+                    },
+                    ClientID = client.Id,
+                }, cancellationToken);
+
+                await webSocket.SendAsync(new ArraySegment<byte>(motdBuffer), WebSocketMessageType.Text, true, cancellationToken);
+
                 var buffer = new byte[_messagesSize];
-                while(webSocket.State == WebSocketState.Open)
+                while (webSocket.State == WebSocketState.Open)
                 {
                     var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
                     if (result.CloseStatus.HasValue)
                         break;
-                    var payload = Encoding.UTF8.GetString(buffer, 0, result.Count);
+
+
+                    // TODO: Move this logic to a more "central" place
+                    Response response = new()
+                    {
+                        ClientID = client.Id,
+                    };
+
+                    try
+                    {
+                        var reqStream = new MemoryStream(buffer, 0, result.Count);
+                        var request = await JsonSerializer.DeserializeAsync<Request>(
+                            reqStream,
+                            new JsonSerializerOptions
+                            {
+
+                            },
+                            cancellationToken
+                        );
+
+                        response.Id = request != null ? request.Id : 0;
+                    }
+                    catch (JsonException e)
+                    {
+                        response.Error = e.Message;
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e.ToString());
+                        response.Error = "Internal server error";
+                    }
+
+                    var resBuffer = await Deserialize(response, cancellationToken);
+                    await webSocket.SendAsync(new ArraySegment<byte>(resBuffer), WebSocketMessageType.Text, true, cancellationToken);
+
                 }
             }
             else
@@ -52,6 +102,25 @@ namespace Soqet.Controllers
                 HttpContext.Response.ContentType = "plain/text";
                 await HttpContext.Response.WriteAsync("HTTP WebSocket Upgrade is required on this endpoint.\nTry /api/connect for HTTP Long Polling.", cancellationToken: cancellationToken);
             }
+        }
+
+        private static async Task<byte[]> Deserialize<T>(T obj, CancellationToken cancellationToken = default)
+        {
+            var stream = new MemoryStream();
+            await JsonSerializer.SerializeAsync(
+                stream,
+                obj,
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = false,
+                },
+                cancellationToken
+            );
+
+            return stream.ToArray();
         }
     }
 }

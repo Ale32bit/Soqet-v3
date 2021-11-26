@@ -39,3 +39,8 @@ app.UseWebSockets();
 app.MapControllers();
 
 app.Run();
+
+static void Process()
+{
+
+}
