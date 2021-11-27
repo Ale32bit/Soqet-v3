@@ -1,46 +1,55 @@
 using Microsoft.OpenApi.Models;
 using Soqet.Models;
+using System.Text.Json;
 
-var builder = WebApplication.CreateBuilder(args);
-
-var clients = new List<Client>();
-builder.Services.AddSingleton(clients);
-
-builder.Services.AddControllers();
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(o =>
+namespace Soqet
 {
-    o.SwaggerDoc("v3", new()
+    public class Program
     {
-        Title = "Soqet",
-        Version = "v3",
-        Contact = new OpenApiContact
+        
+
+        private static readonly HashSet<Client> clients = new();
+        
+        public static void Main(string[] args)
         {
-            Name = "AlexDevs",
-            Email = "me@alexdevs.me",
-            Url = new Uri("https://alexdevs.me"),
-        },
-    });
-});
+            var builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
+            builder.Services.AddSingleton(clients);
+            builder.Services.AddSingleton<ServiceLogic>();
 
-app.UseSwagger(c => { c.RouteTemplate = "docs/{documentname}/swagger.json"; });
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/docs/v3/swagger.json", "Soqet V3");
-    c.DocumentTitle = "Soqet API Documentation";
-    c.RoutePrefix = "docs";
-});
+            builder.Services.AddControllers();
+            // Add services to the container.
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(o =>
+            {
+                o.SwaggerDoc("v3", new()
+                {
+                    Title = "Soqet",
+                    Version = "v3",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "AlexDevs",
+                        Email = "me@alexdevs.me",
+                        Url = new Uri("https://alexdevs.me"),
+                    },
+                });
+            });
 
-app.UseWebSockets();
-app.MapControllers();
+            var app = builder.Build();
 
-app.Run();
+            app.UseSwagger(c => { c.RouteTemplate = "docs/{documentname}/swagger.json"; });
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/docs/v3/swagger.json", "Soqet V3");
+                c.DocumentTitle = "Soqet API Documentation";
+                c.RoutePrefix = "docs";
+            });
 
-static void Process()
-{
+            app.UseWebSockets();
+            app.MapControllers();
 
+            app.Run();
+        }
+    }
 }

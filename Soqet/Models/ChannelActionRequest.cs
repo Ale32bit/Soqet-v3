@@ -1,7 +1,7 @@
 ﻿namespace Soqet.Models
 {
 #pragma warning disable CS8618
-    public class ChannelActionRequest : IRequest
+    public class ChannelActionRequest
     {
         public string Channel { get; set; }
         public string Action { get; set; }

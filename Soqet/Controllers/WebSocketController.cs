@@ -1,11 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Soqet.Models;
 using System.Net;
 using System.Net.WebSockets;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Soqet.Controllers
 {
@@ -15,16 +12,18 @@ namespace Soqet.Controllers
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
-        private readonly List<Client> _clients;
+        private readonly HashSet<Client> _clients;
+        private readonly ServiceLogic _logic;
 
         private readonly long _messagesSize;
-        private string _motd = "Soqet v3";
+        private readonly string _motd = "Soqet v3";
 
-        public WebSocketController(ILogger<WebSocketController> logger, IConfiguration configuration, List<Client> clients)
+        public WebSocketController(ILogger<WebSocketController> logger, IConfiguration configuration, HashSet<Client> clients, ServiceLogic logic)
         {
             _logger = logger;
             _configuration = configuration;
             _clients = clients;
+            _logic = logic;
 
             _messagesSize = _configuration.GetValue<long>("WebSocketMaxMessageSize");
             _motd = _configuration["MOTD"];
@@ -38,10 +37,18 @@ namespace Soqet.Controllers
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                var client = new Client();
+                var client = new Client
+                {
+                    Send = async (data) =>
+                    {
+                        var serialized = await ServiceLogic.SerializeAsync(data);
+                        await webSocket.SendAsync(new ArraySegment<byte>(serialized), WebSocketMessageType.Text, true, cancellationToken);
+                    }
+                };
+
                 _clients.Add(client);
 
-                var motdBuffer = await Deserialize(new EventData()
+                client.Send(new EventData()
                 {
                     Event = "motd",
                     Data = new MOTDEvent
@@ -49,9 +56,7 @@ namespace Soqet.Controllers
                         Message = _motd,
                     },
                     ClientID = client.Id,
-                }, cancellationToken);
-
-                await webSocket.SendAsync(new ArraySegment<byte>(motdBuffer), WebSocketMessageType.Text, true, cancellationToken);
+                });
 
                 var buffer = new byte[_messagesSize];
                 while (webSocket.State == WebSocketState.Open)
@@ -72,14 +77,11 @@ namespace Soqet.Controllers
                         var reqStream = new MemoryStream(buffer, 0, result.Count);
                         var request = await JsonSerializer.DeserializeAsync<Request>(
                             reqStream,
-                            new JsonSerializerOptions
-                            {
-
-                            },
+                            ServiceLogic.JsonOptions,
                             cancellationToken
                         );
 
-                        response.Id = request != null ? request.Id : 0;
+                        response = _logic.ProcessRequest(client, request);
                     }
                     catch (JsonException e)
                     {
@@ -91,10 +93,11 @@ namespace Soqet.Controllers
                         response.Error = "Internal server error";
                     }
 
-                    var resBuffer = await Deserialize(response, cancellationToken);
+                    var resBuffer = await ServiceLogic.SerializeAsync(response, cancellationToken);
                     await webSocket.SendAsync(new ArraySegment<byte>(resBuffer), WebSocketMessageType.Text, true, cancellationToken);
-
                 }
+
+                _clients.Remove(client);
             }
             else
             {
@@ -104,23 +107,6 @@ namespace Soqet.Controllers
             }
         }
 
-        private static async Task<byte[]> Deserialize<T>(T obj, CancellationToken cancellationToken = default)
-        {
-            var stream = new MemoryStream();
-            await JsonSerializer.SerializeAsync(
-                stream,
-                obj,
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-                    WriteIndented = false,
-                },
-                cancellationToken
-            );
-
-            return stream.ToArray();
-        }
+        
     }
 }

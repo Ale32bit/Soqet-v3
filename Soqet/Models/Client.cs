@@ -5,10 +5,11 @@ namespace Soqet.Models
 {
     public class Client
     {
-        public readonly Guid UUID = new();
+        public readonly Guid UUID = Guid.NewGuid();
         public string Id { get; set; }
         public bool IsAuthenticated { get; set; } = false;
-        public readonly List<string> Channels = new();
+        public readonly HashSet<string> Channels = new();
+        public Action<object> Send { get; set; } = data => { };
 
         public Client(string? token = null)
         {
@@ -16,7 +17,7 @@ namespace Soqet.Models
             {
                 var uuid = new byte[16];
                 RandomNumberGenerator.Fill(uuid);
-                Id = Convert.ToHexString(uuid).ToLower();
+                Id = "G" + Convert.ToHexString(uuid).ToLower(); // G stands for guest
             } else
             {
                 Id = GenerateAuthID(token);
@@ -42,7 +43,7 @@ namespace Soqet.Models
                 uuid.Append(buff[0].ToString("x"));
             }
 
-            return uuid.ToString().ToLower();
+            return "A" + uuid.ToString().ToLower(); // A stands for "authenticated"
         }
 
         private static byte[] Hash(string input)
