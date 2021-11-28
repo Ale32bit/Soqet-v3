@@ -41,8 +41,18 @@ namespace Soqet.Controllers
                 {
                     Send = async (data) =>
                     {
-                        var serialized = await ServiceLogic.SerializeAsync(data);
-                        await webSocket.SendAsync(new ArraySegment<byte>(serialized), WebSocketMessageType.Text, true, cancellationToken);
+                        if (webSocket.State == WebSocketState.Open)
+                        {
+                            try
+                            {
+                                var serialized = await ServiceLogic.SerializeAsync(data);
+                                await webSocket.SendAsync(new ArraySegment<byte>(serialized), WebSocketMessageType.Text, true, cancellationToken);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex.ToString());
+                            }
+                        }
                     }
                 };
 
@@ -107,6 +117,6 @@ namespace Soqet.Controllers
             }
         }
 
-        
+
     }
 }

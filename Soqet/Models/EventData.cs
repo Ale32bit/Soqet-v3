@@ -4,7 +4,7 @@ namespace Soqet.Models
 {
     public class EventData
     {
-        public readonly string Type = "event";
+        public string Type { get; set; } = "event";
         public string Event { get; set; }
         [JsonPropertyName("client_id")]
         public string ClientID { get; set; }
