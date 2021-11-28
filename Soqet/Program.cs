@@ -6,10 +6,10 @@ namespace Soqet
 {
     public class Program
     {
-        
+
 
         private static readonly HashSet<Client> clients = new();
-        
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -34,16 +34,18 @@ namespace Soqet
                         Url = new Uri("https://alexdevs.me"),
                     },
                 });
+
+                o.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Soqet.xml"));
             });
 
             var app = builder.Build();
 
-            app.UseSwagger(c => { c.RouteTemplate = "docs/{documentname}/swagger.json"; });
+            app.UseSwagger(c => { c.RouteTemplate = "/{documentname}/swagger.json"; });
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/docs/v3/swagger.json", "Soqet V3");
+                c.SwaggerEndpoint("/v3/swagger.json", "Soqet V3");
                 c.DocumentTitle = "Soqet API Documentation";
-                c.RoutePrefix = "docs";
+                c.RoutePrefix = "";
             });
 
             app.UseWebSockets();

@@ -8,7 +8,7 @@ namespace Soqet.Models
     {
         public string Channel { get; set; }
         public object Content { get; set; }
-        public Dictionary<string, object> Meta { get; set; }
+        public Dictionary<string, object>? Meta { get; set; }
     }
 #pragma warning restore CS8618
 }

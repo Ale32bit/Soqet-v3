@@ -7,7 +7,7 @@ namespace Soqet.Models
     {
         public int Id { get; set; } = 0;
         public string Type { get; set; }
-        public JsonElement Data { get; set; }
+        public object? Data { get; set; }
     }
 #pragma warning restore CS8618
 }

@@ -38,9 +38,16 @@ namespace Soqet
                 {
                     case "message":
                         Message? messageData = null;
-                        if(request.Data.ValueKind != JsonValueKind.Undefined)
+                        if (request.Data is JsonElement)
                         {
-                            messageData = request.Data.Deserialize<Message>(JsonOptions);
+                            if (((JsonElement)request.Data).ValueKind != JsonValueKind.Undefined)
+                            {
+                                messageData = ((JsonElement)request.Data).Deserialize<Message>(JsonOptions);
+                            }
+                        }
+                        else if (request.Data is Message)
+                        {
+                            messageData = (Message)request.Data;
                         }
 
                         if (messageData == null || string.IsNullOrEmpty(messageData.Channel))
@@ -51,7 +58,7 @@ namespace Soqet
 
                         messageData.Channel = SanitizeChannelName(messageData.Channel);
 
-                        if(messageData.Channel == _wildcardChannelName)
+                        if (messageData.Channel == _wildcardChannelName)
                         {
                             response.Error = _wildcardChannelName + " is a read-only channel!";
                             break;
@@ -86,9 +93,16 @@ namespace Soqet
 
                     case "channel":
                         ChannelActionRequest? channelData = null;
-                        if (request.Data.ValueKind != JsonValueKind.Undefined)
+                        if (request.Data is JsonElement)
                         {
-                            channelData = request.Data.Deserialize<ChannelActionRequest>(JsonOptions);
+                            if (((JsonElement)request.Data).ValueKind != JsonValueKind.Undefined)
+                            {
+                                channelData = ((JsonElement)request.Data).Deserialize<ChannelActionRequest>(JsonOptions);
+                            }
+                        }
+                        else if (request.Data is ChannelActionRequest)
+                        {
+                            channelData = (ChannelActionRequest)request.Data;
                         }
 
                         if (channelData == null || string.IsNullOrEmpty(channelData.Channel) || string.IsNullOrEmpty(channelData.Action))
@@ -116,9 +130,16 @@ namespace Soqet
 
                     case "authenticate":
                         AuthenticationRequest? authenticationData = null;
-                        if (request.Data.ValueKind != JsonValueKind.Undefined)
+                        if (request.Data is JsonElement)
                         {
-                            authenticationData = request.Data.Deserialize<AuthenticationRequest>(JsonOptions);
+                            if (((JsonElement)request.Data).ValueKind != JsonValueKind.Undefined)
+                            {
+                                authenticationData = ((JsonElement)request.Data).Deserialize<AuthenticationRequest>(JsonOptions);
+                            }
+                        }
+                        else if (request.Data is AuthenticationRequest)
+                        {
+                            authenticationData = (AuthenticationRequest)request.Data;
                         }
 
                         if (authenticationData == null || string.IsNullOrEmpty(authenticationData.Token))
@@ -174,7 +195,7 @@ namespace Soqet
             meta["client_id"] = sender.Id;
             meta["client_authenticated"] = sender.IsAuthenticated;
             meta["channel_name"] = channel;
-            meta["timestamp"] = DateTime.UtcNow.Millisecond;
+            meta["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
             return meta;
         }
