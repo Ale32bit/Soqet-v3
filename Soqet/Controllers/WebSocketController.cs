@@ -48,6 +48,10 @@ namespace Soqet.Controllers
                                 var serialized = await ServiceLogic.SerializeAsync(data);
                                 await webSocket.SendAsync(new ArraySegment<byte>(serialized), WebSocketMessageType.Text, true, cancellationToken);
                             }
+                            catch (WebSocketException)
+                            {
+                                // we ignore it
+                            }
                             catch (Exception ex)
                             {
                                 _logger.LogWarning(ex.ToString());
