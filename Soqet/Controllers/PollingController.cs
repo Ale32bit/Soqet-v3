@@ -77,7 +77,8 @@ namespace Soqet.Controllers
                 return NotFound();
             }
 
-            var response = _logic.ProcessRequest(client, new Request {
+            var response = _logic.ProcessRequest(client, new Request
+            {
                 Type = "message",
                 Data = message,
             });
@@ -151,7 +152,8 @@ namespace Soqet.Controllers
                 return NotFound();
             }
 
-            var result = new JsonResult(new Response { 
+            var result = new JsonResult(new Response
+            {
                 ClientID = client.Id,
                 Data = messages[client.UUID],
             });
@@ -178,11 +180,11 @@ namespace Soqet.Controllers
 
         private void DestroyExpiredClients()
         {
-            foreach(var client in _clients.Where(m => updateTime[m.UUID] + ExpireTime < DateTime.UtcNow))
+            foreach (var client in updateTime.Where(m => m.Value + ExpireTime < DateTime.UtcNow))
             {
-                _clients.Remove(client);
-                messages.TryRemove(client.UUID, out _);
-                updateTime.TryRemove(client.UUID, out _);
+                _clients.Remove(_clients.First(m => m.UUID == client.Key));
+                messages.TryRemove(client.Key, out _);
+                updateTime.TryRemove(client.Key, out _);
             }
         }
     }
