@@ -1,4 +1,5 @@
 ﻿using Soqet.Models;
+using System.Text;
 using System.Text.Json;
 
 namespace Soqet;
@@ -221,6 +222,8 @@ public class ServiceLogic
 
     public static string SanitizeChannelName(string channel)
     {
+        var buffer = Encoding.Default.GetBytes(channel);
+        channel = Encoding.UTF8.GetString(buffer);
         return channel[0..Math.Min(channel.Length, 256)];
     }
 
