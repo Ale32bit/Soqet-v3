@@ -54,7 +54,7 @@ namespace Soqet.Controllers
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex.ToString());
+                                _logger.LogWarning(ex, nameof(Client.Send));
                             }
                         }
                     }
@@ -75,12 +75,18 @@ namespace Soqet.Controllers
                 var buffer = new byte[_messagesSize];
                 while (webSocket.State == WebSocketState.Open)
                 {
-                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
-                    if (result.CloseStatus.HasValue)
+                    WebSocketReceiveResult result;
+                    try
+                    {
+                        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+                        if (result.CloseStatus.HasValue)
+                            break;
+                    }
+                    catch (OperationCanceledException)
+                    {
                         break;
+                    }
 
-
-                    // TODO: Move this logic to a more "central" place
                     Response response = new()
                     {
                         ClientID = client.Id,
