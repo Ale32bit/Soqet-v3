@@ -198,7 +198,7 @@ namespace Soqet
 
         public static string SanitizeChannelName(string channel)
         {
-            return channel[0..Math.Min(channel.Length, 128)];
+            return channel[0..Math.Min(channel.Length, 256)];
         }
 
         public static Dictionary<string, object> BuildMeta(Client sender, string channel, Dictionary<string, object>? meta = null)
