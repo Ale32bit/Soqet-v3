@@ -91,7 +91,7 @@ public class ServiceLogic
                         channelData = (ChannelActionRequest)request.Data;
                     }
 
-                    if (channelData == null || string.IsNullOrEmpty(channelData.Channel) || string.IsNullOrEmpty(channelData.Action))
+                    if (string.IsNullOrEmpty(channelData.Action))
                     {
                         response.Error = "Invalid channel request model";
                         break;
@@ -130,6 +130,10 @@ public class ServiceLogic
                         {
                             response.Error = "Invalid channel request model";
                         }
+                    }
+                    else if (channelData.Action == "list")
+                    {
+                        response.Data = client.Channels.ToArray();
                     }
                     else
                     {
