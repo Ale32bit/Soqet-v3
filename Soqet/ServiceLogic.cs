@@ -1,4 +1,4 @@
-﻿using Soqet.Models;
+using Soqet.Models;
 using System.Text;
 using System.Text.Json;
 
