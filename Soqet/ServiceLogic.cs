@@ -1,4 +1,4 @@
-﻿using Soqet.Models;
+using Soqet.Models;
 using System.Text;
 using System.Text.Json;
 
@@ -16,14 +16,12 @@ public class ServiceLogic
     private readonly HashSet<Client> _clients;
     private readonly IConfiguration _configuration;
     private readonly ILogger _logger;
-    private readonly string _wildcardChannelName;
 
     public ServiceLogic(HashSet<Client> clients, IConfiguration configuration, ILogger<ServiceLogic> logger)
     {
         _clients = clients;
         _configuration = configuration;
         _logger = logger;
-        _wildcardChannelName = _configuration["WildcardChannelName"];
     }
 
     public Response ProcessRequest(Client client, Request? request)
@@ -57,35 +55,9 @@ public class ServiceLogic
                     }
 
                     messageData.Channel = SanitizeChannelName(messageData.Channel);
-
-                    if (messageData.Channel == _wildcardChannelName)
-                    {
-                        response.Error = _wildcardChannelName + " is a read-only channel!";
-                        break;
-                    }
-
                     messageData.Meta = BuildMeta(client, messageData.Channel, messageData.Meta);
 
                     var cls = _clients.Where(m => m.Channels.Contains(messageData.Channel) && m.UUID != client.UUID);
-                    foreach (var cl in cls)
-                    {
-                        try
-                        {
-                            cl.Send(new EventData
-                            {
-                                ClientID = cl.Id,
-                                Event = "message",
-                                Data = messageData,
-                            });
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex.ToString());
-                        }
-                    }
-
-                    messageData.Channel = _wildcardChannelName;
-                    var clsWildcard = _clients.Where(m => m.Channels.Contains(_wildcardChannelName) && m.UUID != client.UUID);
                     foreach (var cl in cls)
                     {
                         try
