@@ -35,6 +35,29 @@
         </a>
     </div>
 
+    <h2 class="border-bottom border-secondary">Introduction</h2>
+    <p>Soqet is a web service with the purpose of easily broadcasting data from client to clients in channels.</p>
+    <p>It was created as a replacement for ComputerCraft modems to allow cross server communication.</p>
+
+    <h3>Client</h3>
+
+    <p>Clients can also authenticate themselves with the use of a token. Authenticating a token will always yield the
+        same client ID, this is done with the help of hashing algorithms.</p>
+    <p>Authenticated clients have a client ID that starts with the character "A", guest clients instead have a client ID
+        that starts with "G".<br>
+        Authentication is completely optional and is often done to make sure the messages are coming from a trusted
+        source.
+    </p>
+
+    <h3>Channel</h3>
+    <p>Channels are used to direct the messages, any client can open any channel.</p>
+    <p>Clients can open, close and transmit to channels freely. Opening channels allow the client to receive such
+        data.</p>
+    <p>Channel names must be string with a maximum length of 256 characters and at least 1 character long. Going further
+        will truncate the name.</p>
+    <p>As of now there is <span class="fw-bolder">no</span> wildcard channel (a read-only channel where clients can
+        receive everything transmitted in real time).</p>
+
     <h2 class="border-bottom border-secondary">WebSocket API</h2>
 
     <h3 id="ws-connection"><a href="#ws-connection" class="text-decoration-none">Connection</a></h3>
@@ -52,9 +75,77 @@
         <code class="text-light fs-6">wss://soqet.alexdevs.me/ws/connect/<span class="fst-italic">{nonce}</span></code>
     </div>
 
+    <h4>Result</h4>
+    <p>If the connection is successful, the client should receive a MOTD <a href="#model-event">event</a>.</p>
+    <p>Example:</p>
+    <pre class="bg-dark text-light p-2 rounded mb-2">
+{
+    "type": "event",
+    "event": "motd",    
+    "client_id": "Gc92ff51049b0bb99bafd1d190d8cc90b",
+    "data": {
+        "message": "Welcome to Soqet v3!"
+    }
+}</pre>
+
+    <h3 id="ws-sendmessage"><a href="#ws-sendmessage" class="text-decoration-none">Sending a message</a></h3>
+    <p>Messages can contain any kind of payload as long as JSON can serialize.</p>
+    <p>An additional metadata object is included in the message request, it contains the timestamp of the message, the
+        channel name, the client id of the sender and whether the client was authenticated.<br/>
+        The client can also add more metadata, but is discouraged to do so.
+    </p>
+    <p>See request model about sending messages.</p>
+    
     <h2 class="border-bottom border-secondary">Models</h2>
     <p>Here are the data models used by the client to communicate with the server and vice versa.</p>
     <p>All communication is done in the <code>application/json</code> format.</p>
+
+    <h3 id="model-event"><a href="#model-event" class="text-decoration-none">Event</a></h3>
+    <p>The server will send events automatically.</p>
+    <p>Events are always represented by this model and with a <code>type</code> of <code>"event"</code></p>
+
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th scope="col">Key</th>
+            <th scope="col">Value</th>
+            <th scope="col">Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>type*</td>
+            <td>"event"</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>event</td>
+            <td>string</td>
+            <td>Type of the event</td>
+        </tr>
+        <tr>
+            <td>client_id</td>
+            <td>string</td>
+            <td>ID of the client</td>
+        </tr>
+        <tr>
+            <td>data</td>
+            <td>any?</td>
+            <td>Payload of the event</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p>Example:</p>
+    <pre class="bg-dark text-light p-2 rounded mb-2">
+{
+    "id": 42,
+    "type": "message",
+    "data": {
+        "channel": "foo",
+        "content": "bar"
+    }
+}</pre>
 
     <h3 id="model-request"><a href="#model-request" class="text-decoration-none">Request</a></h3>
     <p>Client requests must respect this model.</p>
@@ -76,12 +167,12 @@
         <tr>
             <td>type</td>
             <td>string</td>
-            <td>Type of the request</td>
+            <td>Type of the request. See request data.</td>
         </tr>
         <tr>
             <td>data</td>
             <td>any?</td>
-            <td>Payload of the request</td>
+            <td>Payload of the request. See request data.</td>
         </tr>
         </tbody>
     </table>
@@ -96,6 +187,98 @@
         "content": "bar"
     }
 }</pre>
+    
+    <h4>Request data</h4>
+    <p>These models are to be used in the <code>data</code> field to make requests.</p>
+    
+    <h5>Message request</h5>
+    <p>Type of the request: <code>message</code></p>
+    <p>Payload:</p>
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th scope="col">Key</th>
+            <th scope="col">Value</th>
+            <th scope="col">Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>channel</td>
+            <td>string</td>
+            <td>Name of the channel</td>
+        </tr>
+        <tr>
+            <td>content</td>
+            <td>any</td>
+            <td>Data to send</td>
+        </tr>
+        <tr>
+            <td>meta</td>
+            <td>Map &lt;string, any&gt;</td>
+            <td>Metadata</td>
+        </tr>
+        </tbody>
+    </table>
+
+
+
+    <h5>Channel action request</h5>
+    <p>Type of the request: <code>channel</code></p>
+    <p>Payload:</p>
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th scope="col">Key</th>
+            <th scope="col">Value</th>
+            <th scope="col">Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>channel</td>
+            <td>string?</td>
+            <td>Name of the channel. This field overrides the multiple channels field.</td>
+        </tr>
+        <tr>
+            <td>channels</td>
+            <td>string[]?</td>
+            <td>Multiple channels.</td>
+        </tr>
+        <tr>
+            <td>action</td>
+            <td>string</td>
+            <td>What to do with the channel. Must be <code>"open"</code>, <code>"close"</code> or <code>"list"</code>.</td>
+        </tr>
+        </tbody>
+    </table>
+    
+    
+    
+    <h5>Authentication request</h5>
+    <p>Type of the request: <code>authenticate</code></p>
+
+    <p>Payload:</p>
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th scope="col">Key</th>
+            <th scope="col">Value</th>
+            <th scope="col">Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>token</td>
+            <td>string</td>
+            <td>Token to authenticate with.</td>
+        </tr>
+        </tbody>
+    </table>
+    
+    <h5>Ping request</h5>
+    <p>Type of the request: <code>ping</code></p>
+    <p>Pong!</p>
 
     <h3>Response</h3>
     <p>Responses to client requests are always represented by this model and with a <code>type</code> of <code>"response"</code>
@@ -142,8 +325,6 @@
         </tbody>
     </table>
 
-    <p>* Read only</p>
-
     <p>Example:</p>
     <pre class="bg-dark text-light p-2 rounded mb-2">
 {
@@ -154,6 +335,10 @@
     "client_id": "0123456789ABCDEF",
     "data": null
 }</pre>
+
+    <h4>Legend</h4>
+    <p>* Read only</p>
+    <p>? Nullable</p>
 
 </div>
 
