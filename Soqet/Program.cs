@@ -42,9 +42,10 @@ public class Program
         {
             c.SwaggerEndpoint("/v3/swagger.json", "Soqet V3");
             c.DocumentTitle = "Soqet API Documentation";
-            c.RoutePrefix = "";
+            c.RoutePrefix = "longpoll";
         });
 
+        app.UseStaticFiles();
         app.UseWebSockets();
         app.MapControllers();
 

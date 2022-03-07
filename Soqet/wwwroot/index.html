@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Soqet v3</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+</head>
+<body>
+
+<div class="container">
+    <div class="py-3 mb-1">
+        <header class="d-flex flex-wrap justify-content-center border-bottom">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+                <span class="fs-3">Soqet v3</span>
+            </a>
+
+            <ul class="nav nav-pills">
+                <li class="nav-item"><a href="longpoll" class="nav-link" target="_blank">HTTP Rest API</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">Source Code</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">Soqet Browser</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">CC Library</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">OC Library</a></li>
+            </ul>
+        </header>
+        <h4 class="fst-italic">Inter-server messages over Soqet</h4>
+    </div>
+
+    <div class="alert alert-primary" role="alert">
+        <a href="longpoll" class="alert-link stretched-link" target="_blank">
+            Click here to browse the HTTP Rest API (Long Polling)
+        </a>
+    </div>
+
+    <h2 class="border-bottom border-secondary">WebSocket API</h2>
+
+    <h3 id="ws-connection"><a href="#ws-connection" class="text-decoration-none">Connection</a></h3>
+    <p>Connection is initiated by upgrading the request to the WebSocket endpoint.</p>
+    <p>Example:</p>
+    <div class="bg-dark p-2 rounded mb-2">
+        <span class="badge bg-primary fs-6 m-1">WS</span>
+        <code class="text-light fs-6">wss://soqet.alexdevs.me/ws/connect</code>
+    </div>
+
+    <p>A nonce can also be given to identify multiple instances in the application.</p>
+    <p>Example:</p>
+    <div class="bg-dark p-2 rounded mb-2">
+        <span class="badge bg-primary fs-6 m-1">WS</span>
+        <code class="text-light fs-6">wss://soqet.alexdevs.me/ws/connect/<span class="fst-italic">{nonce}</span></code>
+    </div>
+
+    <h2 class="border-bottom border-secondary">Models</h2>
+    <p>Here are the data models used by the client to communicate with the server and vice versa.</p>
+    <p>All communication is done in the <code>application/json</code> format.</p>
+
+    <h3 id="model-request"><a href="#model-request" class="text-decoration-none">Request</a></h3>
+    <p>Client requests must respect this model.</p>
+
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th scope="col">Key</th>
+            <th scope="col">Value</th>
+            <th scope="col">Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>id</td>
+            <td>int? = 0</td>
+            <td>Customizable ID of the request (for application purposes)</td>
+        </tr>
+        <tr>
+            <td>type</td>
+            <td>string</td>
+            <td>Type of the request</td>
+        </tr>
+        <tr>
+            <td>data</td>
+            <td>any?</td>
+            <td>Payload of the request</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p>Example:</p>
+    <pre class="bg-dark text-light p-2 rounded mb-2">
+{
+    "id": 42,
+    "type": "message",
+    "data": {
+        "channel": "foo",
+        "content": "bar"
+    }
+}</pre>
+
+    <h3>Response</h3>
+    <p>Responses to client requests are always represented by this model and with a <code>type</code> of <code>"response"</code>
+    </p>
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th scope="col">Key</th>
+            <th scope="col">Value</th>
+            <th scope="col">Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>type*</td>
+            <td>"response"</td>
+            <td>Type of the data. In this model it's always "response"</td>
+        </tr>
+        <tr>
+            <td>id</td>
+            <td>int? = 0</td>
+            <td>Custom ID set from the request</td>
+        </tr>
+        <tr>
+            <td>ok</td>
+            <td>boolean</td>
+            <td>Whether the request was successful</td>
+        </tr>
+        <tr>
+            <td>error</td>
+            <td>string?</td>
+            <td>Error message if the request failed</td>
+        </tr>
+        <tr>
+            <td>client_id</td>
+            <td>string</td>
+            <td>ID of the client</td>
+        </tr>
+        <tr>
+            <td>data</td>
+            <td>any?</td>
+            <td>Payload of the response</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p>* Read only</p>
+
+    <p>Example:</p>
+    <pre class="bg-dark text-light p-2 rounded mb-2">
+{
+    "type": "response",    
+    "id": 42,
+    "ok": true,
+    "error": null,
+    "client_id": "0123456789ABCDEF",
+    "data": null
+}</pre>
+
+</div>
+
+</body>
+</html>
